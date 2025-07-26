@@ -22,7 +22,7 @@ const ChatApp = () => {
   const initializeSession = () => {
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     setSessionId(newSessionId);
-    setConnectionStatus('connecting');
+    setConnectionStatus('connected');
 
     // Mensaje de bienvenida
     setMessages([{
@@ -32,68 +32,12 @@ const ChatApp = () => {
       timestamp: new Date().toLocaleTimeString()
     }]);
 
-    // Cerrar conexión anterior si existe
-    if (eventSource) {
-      eventSource.close();
-    }
-
-    // Conectar a Server-Sent Events para recibir respuestas
-    const newEventSource = new EventSource(`/api/events?sessionId=${newSessionId}`);
-    setEventSource(newEventSource);
-    
-    newEventSource.onopen = () => {
-      console.log('SSE connection opened for session:', newSessionId);
-      setConnectionStatus('connected');
-    };
-    
-    newEventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('SSE message received:', data);
-        
-        if (data.type === 'connected') {
-          setConnectionStatus('connected');
-        } else if (data.type === 'message') {
-          setIsTyping(false);
-          
-          const botMessage: Message = {
-            id: Date.now(),
-            text: data.message,
-            sender: 'bot',
-            timestamp: new Date().toLocaleTimeString()
-          };
-          
-          setMessages(prev => [...prev, botMessage]);
-        }
-      } catch (error) {
-        console.error('Error parsing SSE message:', error);
-      }
-    };
-
-    newEventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      setConnectionStatus('disconnected');
-      
-      // Intentar reconectar después de 3 segundos
-      setTimeout(() => {
-        if (newEventSource.readyState === EventSource.CLOSED) {
-          console.log('Attempting to reconnect...');
-          setConnectionStatus('connecting');
-        }
-      }, 3000);
-    };
-
-    return newEventSource;
+    console.log('Nueva sesión iniciada:', newSessionId);
   };
 
   // Inicializar sesión al cargar el componente
   useEffect(() => {
-    const es = initializeSession();
-    
-    // Cleanup al desmontar el componente
-    return () => {
-      es.close();
-    };
+    initializeSession();
   }, []);
 
   // Función para iniciar un nuevo chat
