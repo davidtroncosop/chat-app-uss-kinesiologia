@@ -17,7 +17,7 @@ const ChatApp = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
-  // Generar session ID al cargar
+  // Generar session ID al cargar y conectar a eventos
   useEffect(() => {
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     setSessionId(newSessionId);
@@ -30,6 +30,40 @@ const ChatApp = () => {
       sender: 'bot',
       timestamp: new Date().toLocaleTimeString()
     }]);
+
+    // Conectar a Server-Sent Events para recibir respuestas
+    const eventSource = new EventSource(`/api/events?sessionId=${newSessionId}`);
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'message') {
+          setIsTyping(false);
+          
+          const botMessage: Message = {
+            id: Date.now(),
+            text: data.message,
+            sender: 'bot',
+            timestamp: new Date().toLocaleTimeString()
+          };
+          
+          setMessages(prev => [...prev, botMessage]);
+        }
+      } catch (error) {
+        console.error('Error parsing SSE message:', error);
+      }
+    };
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      setConnectionStatus('disconnected');
+    };
+
+    // Cleanup al desmontar el componente
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   // Auto scroll to bottom
