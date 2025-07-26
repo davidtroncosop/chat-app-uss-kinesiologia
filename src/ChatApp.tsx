@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, User, Bot, MessageSquare, Clock } from 'lucide-react';
+import { Send, User, Bot, MessageSquare, Clock, RefreshCw } from 'lucide-react';
 
 interface Message {
   id: number;
@@ -16,12 +16,13 @@ const ChatApp = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
-  // Generar session ID al cargar y conectar a eventos
-  useEffect(() => {
+  // Función para inicializar una nueva sesión
+  const initializeSession = () => {
     const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     setSessionId(newSessionId);
-    setConnectionStatus('connected');
+    setConnectionStatus('connecting');
 
     // Mensaje de bienvenida
     setMessages([{
@@ -31,14 +32,28 @@ const ChatApp = () => {
       timestamp: new Date().toLocaleTimeString()
     }]);
 
+    // Cerrar conexión anterior si existe
+    if (eventSource) {
+      eventSource.close();
+    }
+
     // Conectar a Server-Sent Events para recibir respuestas
-    const eventSource = new EventSource(`/api/events?sessionId=${newSessionId}`);
+    const newEventSource = new EventSource(`/api/events?sessionId=${newSessionId}`);
+    setEventSource(newEventSource);
     
-    eventSource.onmessage = (event) => {
+    newEventSource.onopen = () => {
+      console.log('SSE connection opened for session:', newSessionId);
+      setConnectionStatus('connected');
+    };
+    
+    newEventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log('SSE message received:', data);
         
-        if (data.type === 'message') {
+        if (data.type === 'connected') {
+          setConnectionStatus('connected');
+        } else if (data.type === 'message') {
           setIsTyping(false);
           
           const botMessage: Message = {
@@ -55,16 +70,39 @@ const ChatApp = () => {
       }
     };
 
-    eventSource.onerror = (error) => {
+    newEventSource.onerror = (error) => {
       console.error('SSE connection error:', error);
       setConnectionStatus('disconnected');
+      
+      // Intentar reconectar después de 3 segundos
+      setTimeout(() => {
+        if (newEventSource.readyState === EventSource.CLOSED) {
+          console.log('Attempting to reconnect...');
+          setConnectionStatus('connecting');
+        }
+      }, 3000);
     };
 
+    return newEventSource;
+  };
+
+  // Inicializar sesión al cargar el componente
+  useEffect(() => {
+    const es = initializeSession();
+    
     // Cleanup al desmontar el componente
     return () => {
-      eventSource.close();
+      es.close();
     };
   }, []);
+
+  // Función para iniciar un nuevo chat
+  const startNewChat = () => {
+    setIsLoading(false);
+    setIsTyping(false);
+    setInputMessage('');
+    initializeSession();
+  };
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -189,15 +227,33 @@ const ChatApp = () => {
               <div>
                 <h1 className="text-xl font-bold text-gray-800">Asistente USS Kinesiología</h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <div className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-400' : 'bg-red-400'}`}></div>
-                  <span>{connectionStatus === 'connected' ? 'Conectado' : 'Desconectado'}</span>
+                  <div className={`w-2 h-2 rounded-full ${
+                    connectionStatus === 'connected' ? 'bg-green-400' : 
+                    connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 
+                    'bg-red-400'
+                  }`}></div>
+                  <span>
+                    {connectionStatus === 'connected' ? 'Conectado' : 
+                     connectionStatus === 'connecting' ? 'Conectando...' : 
+                     'Desconectado'}
+                  </span>
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-sm text-gray-500">Session ID</div>
-              <div className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
-                {sessionId.substring(0, 16)}...
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={startNewChat}
+                className="flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm text-gray-700"
+                title="Iniciar nuevo chat"
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Nuevo Chat</span>
+              </button>
+              <div className="text-right">
+                <div className="text-sm text-gray-500">Session ID</div>
+                <div className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+                  {sessionId.substring(0, 16)}...
+                </div>
               </div>
             </div>
           </div>
