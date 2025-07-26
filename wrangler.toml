@@ -1,6 +1,9 @@
 name = "chat-app-uss-kinesiologia"
 compatibility_date = "2024-01-15"
 
+[assets]
+directory = "./build"
+
 [env.production]
 # Variables de entorno para producción en Cloudflare Pages
 # Estas se configuran en el dashboard de Cloudflare Pages
