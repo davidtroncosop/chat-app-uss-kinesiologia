@@ -1,0 +1,20 @@
+# Headers para las funciones API
+/api/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+
+# Headers específicos para el webhook
+/api/webhook
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: POST, OPTIONS
+  Access-Control-Allow-Headers: Content-Type
+
+# Headers de seguridad para toda la aplicación
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-XSS-Protection: 1; mode=block

@@ -16,7 +16,7 @@ const ChatApp = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+
 
   // Función para inicializar una nueva sesión
   const initializeSession = () => {
@@ -55,7 +55,11 @@ const ChatApp = () => {
 
   // Llamada real al webhook de n8n
   const sendToN8nWebhook = async (message: string): Promise<string> => {
-    const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL || 'https://n8n.dtroncoso.site/webhook-test/937141bc-6966-4adb-bddd-7f4004210f7d';
+    const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL;
+    
+    if (!webhookUrl) {
+      throw new Error('REACT_APP_N8N_WEBHOOK_URL no está configurada');
+    }
 
     // Payload que coincide con la estructura esperada por n8n
     const payload = {
