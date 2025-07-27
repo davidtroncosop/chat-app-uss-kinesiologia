@@ -51,16 +51,13 @@
         scroll-behavior: smooth;
       }
       
-      /* Prevenir bounce en iOS y pull-to-refresh */
+      /* Mejorar scroll en iOS pero permitir pull-to-refresh */
       body {
-        overscroll-behavior: none;
-        overscroll-behavior-y: none;
         -webkit-overflow-scrolling: touch;
       }
       
-      /* Prevenir pull-to-refresh específicamente */
+      /* Permitir pull-to-refresh en el chat */
       .chat-container {
-        overscroll-behavior-y: contain;
         -webkit-overflow-scrolling: touch;
       }
       

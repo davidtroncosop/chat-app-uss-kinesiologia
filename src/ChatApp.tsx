@@ -16,6 +16,7 @@ const ChatApp = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
+  const [isPullToRefresh, setIsPullToRefresh] = useState(false);
 
 
   // Función para inicializar una nueva sesión
@@ -53,26 +54,69 @@ const ChatApp = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Prevenir pull-to-refresh en móviles
+  // Implementar pull-to-refresh inteligente
   useEffect(() => {
-    const preventPullToRefresh = (e: TouchEvent) => {
+    let startY = 0;
+    let currentY = 0;
+    let isPulling = false;
+
+    const handleTouchStart = (e: TouchEvent) => {
       const target = e.target as HTMLElement;
       const scrollContainer = target.closest('.messages-scroll');
       
       if (scrollContainer && scrollContainer.scrollTop === 0) {
-        // Si estamos en la parte superior del scroll, prevenir el pull-to-refresh
-        if (e.touches.length === 1 && e.touches[0].clientY > 50) {
-          e.preventDefault();
+        startY = e.touches[0].clientY;
+        isPulling = false;
+        setIsPullToRefresh(false);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const scrollContainer = target.closest('.messages-scroll');
+      
+      if (scrollContainer && scrollContainer.scrollTop === 0) {
+        currentY = e.touches[0].clientY;
+        const pullDistance = currentY - startY;
+        
+        // Si el usuario está tirando hacia abajo más de 80px
+        if (pullDistance > 80 && !isPulling) {
+          isPulling = true;
+          setIsPullToRefresh(true);
+        } else if (pullDistance <= 80 && isPulling) {
+          isPulling = false;
+          setIsPullToRefresh(false);
         }
       }
     };
 
-    document.addEventListener('touchstart', preventPullToRefresh, { passive: false });
-    document.addEventListener('touchmove', preventPullToRefresh, { passive: false });
+    const handleTouchEnd = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      const scrollContainer = target.closest('.messages-scroll');
+      
+      if (scrollContainer && scrollContainer.scrollTop === 0 && isPulling) {
+        // Ejecutar refresh (iniciar nuevo chat)
+        setTimeout(() => {
+          startNewChat();
+          setIsPullToRefresh(false);
+        }, 200);
+      } else {
+        setIsPullToRefresh(false);
+      }
+      
+      startY = 0;
+      currentY = 0;
+      isPulling = false;
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    document.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
-      document.removeEventListener('touchstart', preventPullToRefresh);
-      document.removeEventListener('touchmove', preventPullToRefresh);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
     };
   }, []);
 
@@ -235,6 +279,16 @@ const ChatApp = () => {
           </div>
         </div>
       </div>
+
+      {/* Pull-to-refresh indicator */}
+      {isPullToRefresh && (
+        <div className="absolute top-16 left-0 right-0 z-10 flex justify-center">
+          <div className="bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span className="text-sm">Suelta para nuevo chat</span>
+          </div>
+        </div>
+      )}
 
       {/* Chat Messages - Con scroll bidireccional funcional */}
       <div className="flex-1 overflow-y-auto p-4 mobile-compact chat-scroll messages-scroll">
