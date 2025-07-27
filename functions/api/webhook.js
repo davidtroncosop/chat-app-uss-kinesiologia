@@ -13,8 +13,12 @@ export async function onRequestPost(context) {
       throw new Error('No se encontró mensaje en el payload');
     }
     
-    // URL del webhook de n8n (desde variables de entorno o hardcoded)
-    const n8nWebhookUrl = env.N8N_WEBHOOK_URL || 'https://n8n.dtroncoso.site/webhook-test/937141bc-6966-4adb-bddd-7f4004210f7d';
+    // URL del webhook de n8n (desde variables de entorno)
+    const n8nWebhookUrl = env.N8N_WEBHOOK_URL;
+    
+    if (!n8nWebhookUrl) {
+      throw new Error('N8N_WEBHOOK_URL no está configurada en las variables de entorno');
+    }
     
     console.log('🚀 Enviando a n8n:', { userMessage, sessionId });
     

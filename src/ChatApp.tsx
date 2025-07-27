@@ -208,9 +208,9 @@ const ChatApp = () => {
         </div>
       </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="max-w-4xl mx-auto space-y-4">
+      {/* Chat Messages - Burbujas que caen hacia abajo */}
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-end">
+        <div className="max-w-4xl mx-auto space-y-4 flex flex-col justify-end min-h-full">
           {messages.map((message) => (
             <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex items-start space-x-2 max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl`}>
