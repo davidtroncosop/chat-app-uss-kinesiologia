@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, User, Bot, MessageSquare, Clock, RefreshCw } from 'lucide-react';
 
 interface Message {
@@ -42,12 +42,12 @@ const ChatApp = () => {
   }, []);
 
   // Función para iniciar un nuevo chat
-  const startNewChat = () => {
+  const startNewChat = useCallback(() => {
     setIsLoading(false);
     setIsTyping(false);
     setInputMessage('');
     initializeSession();
-  };
+  }, []);
 
   // Auto scroll to bottom
   useEffect(() => {
