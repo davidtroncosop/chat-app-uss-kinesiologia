@@ -1,18 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, User, Bot, MessageSquare, Clock } from 'lucide-react';
 
+interface Message {
+  id: number;
+  text: string;
+  sender: 'user' | 'bot';
+  timestamp: string;
+}
+
 const ChatApp = () => {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
   // Generar session ID al cargar
   useEffect(() => {
-    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     setSessionId(newSessionId);
     setConnectionStatus('connected');
 
@@ -30,9 +37,10 @@ const ChatApp = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Llamada real al webhook de n8n
+  // Llamada al webhook local que procesa con n8n
   const sendToN8nWebhook = async (message: string) => {
-    const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL || 'https://n8n.dtroncoso.site/webhook/937141bc-6966-4adb-bddd-7f4004210f7d';
+    // URL del webhook local (Cloudflare Functions)
+    const webhookUrl = '/api/webhook';
 
     const payload = {
       body: {
@@ -66,21 +74,21 @@ const ChatApp = () => {
       }
 
       const data = await response.json();
+      console.log('Respuesta del webhook:', data);
 
-      // Extraer la respuesta del webhook
-      // Ajusta esta lógica según la estructura de respuesta de tu n8n workflow
+      // Extraer la respuesta del asistente
       if (data && data.response) {
         return data.response;
       } else if (data && data.message) {
         return data.message;
-      } else if (typeof data === 'string') {
-        return data;
+      } else if (data.success === false && data.response) {
+        return data.response; // Mensaje de error amigable
       } else {
         return "Respuesta recibida del asistente USS Kinesiología";
       }
 
     } catch (error) {
-      console.error('Error calling n8n webhook:', error);
+      console.error('Error calling webhook:', error);
       throw new Error('Error al conectar con el asistente. Por favor, intenta nuevamente.');
     }
   };
@@ -88,7 +96,7 @@ const ChatApp = () => {
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
-    const userMessage = {
+    const userMessage: Message = {
       id: Date.now(),
       text: inputMessage,
       sender: 'user',
@@ -106,7 +114,7 @@ const ChatApp = () => {
 
       setIsTyping(false);
 
-      const botMessage = {
+      const botMessage: Message = {
         id: Date.now() + 1,
         text: response,
         sender: 'bot',
@@ -116,7 +124,7 @@ const ChatApp = () => {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       setIsTyping(false);
-      const errorMessage = {
+      const errorMessage: Message = {
         id: Date.now() + 1,
         text: "❌ Error al procesar tu mensaje. Por favor, intenta nuevamente.",
         sender: 'bot',
@@ -128,7 +136,7 @@ const ChatApp = () => {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -223,10 +231,10 @@ const ChatApp = () => {
               <textarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder="Escribe tu consulta sobre kinesiología..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows="1"
+                rows={1}
                 style={{ maxHeight: '120px', minHeight: '48px' }}
                 disabled={isLoading}
               />
