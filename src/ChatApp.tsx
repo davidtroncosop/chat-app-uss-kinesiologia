@@ -236,12 +236,12 @@ const ChatApp = () => {
         </div>
       </div>
 
-      {/* Chat Messages - Con scroll funcional */}
+      {/* Chat Messages - Con scroll bidireccional funcional */}
       <div className="flex-1 overflow-y-auto p-4 mobile-compact chat-scroll messages-scroll">
         <div className="max-w-4xl mx-auto">
-          {/* Spacer que empuja mensajes hacia abajo cuando hay pocos, pero permite scroll cuando hay muchos */}
-          <div style={{ minHeight: '30vh' }}></div>
-          {/* Contenedor de mensajes que permite scroll natural */}
+          {/* Spacer que empuja mensajes hacia abajo cuando hay pocos, pero no interfiere con scroll */}
+          <div style={{ height: messages.length <= 3 ? 'calc(100vh - 250px)' : '20px' }}></div>
+          {/* Contenedor de mensajes que permite scroll natural en ambas direcciones */}
           <div className="space-y-3 sm:space-y-4 pb-5">
           {messages.map((message) => (
             <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} px-2 sm:px-0`}>
