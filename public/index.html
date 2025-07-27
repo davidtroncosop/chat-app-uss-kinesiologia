@@ -51,12 +51,28 @@
         scroll-behavior: smooth;
       }
       
-      /* Prevenir bounce en iOS */
+      /* Prevenir bounce en iOS y pull-to-refresh */
       body {
         overscroll-behavior: none;
+        overscroll-behavior-y: none;
+        -webkit-overflow-scrolling: touch;
       }
       
-      /* Encuadre móvil mejorado */
+      /* Prevenir pull-to-refresh específicamente */
+      .chat-container {
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Mejorar scroll en el área de mensajes */
+      .messages-scroll {
+        overscroll-behavior: contain;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+      
+      /* Encuadre móvil mejorado - Más compacto */
       @media (max-width: 640px) {
         .mobile-frame {
           padding-left: 0.75rem;
@@ -64,12 +80,24 @@
         }
         
         .mobile-compact {
-          padding: 0.75rem;
+          padding: 0.5rem; /* Reducido de 0.75rem */
+        }
+        
+        /* Header más compacto */
+        .mobile-header {
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
+        }
+        
+        /* Input más compacto */
+        .mobile-input {
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
         }
         
         /* Mejor espaciado para burbujas */
         .bubble-spacing {
-          margin-bottom: 0.75rem;
+          margin-bottom: 0.5rem; /* Reducido */
         }
         
         /* Ajuste de ancho para pantallas muy pequeñas */
@@ -79,6 +107,11 @@
         
         .mobile-bubble-bot {
           max-width: 80%;
+        }
+        
+        /* Reducir espaciado entre mensajes en móvil */
+        .message-spacing {
+          margin-bottom: 0.5rem;
         }
       }
       
