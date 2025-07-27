@@ -53,10 +53,13 @@ const ChatApp = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Llamada al webhook local que procesa con n8n
+  // Llamada real al webhook de n8n
   const sendToN8nWebhook = async (message: string): Promise<string> => {
-    // URL del webhook local (Cloudflare Functions)
-    const webhookUrl = '/api/webhook';
+    const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL;
+    
+    if (!webhookUrl) {
+      throw new Error('REACT_APP_N8N_WEBHOOK_URL no está configurada');
+    }
 
     // Payload que coincide con la estructura esperada por n8n
     const payload = {
@@ -161,46 +164,45 @@ const ChatApp = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header - Optimizado para móvil */}
+      {/* Header - Compacto para móvil */}
       <div className="bg-white shadow-lg border-b border-gray-200 flex-shrink-0">
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-2 sm:py-4 mobile-header">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
-              <div className="bg-blue-600 p-1.5 sm:p-2 rounded-full flex-shrink-0">
-                <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <div className="bg-blue-600 p-1 sm:p-2 rounded-full flex-shrink-0">
+                <MessageSquare className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-800 truncate">
-                  Asistente USS Kinesiología
+                <h1 className="text-base sm:text-xl font-bold text-gray-800 truncate">
+                  USS Kinesiología
                 </h1>
-                <div className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm text-gray-600">
-                  <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${
+                {/* Status oculto en móvil para ahorrar espacio */}
+                <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600">
+                  <div className={`w-2 h-2 rounded-full ${
                     connectionStatus === 'connected' ? 'bg-green-400' : 
                     connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 
                     'bg-red-400'
                   }`}></div>
-                  <span className="hidden sm:inline">
+                  <span>
                     {connectionStatus === 'connected' ? 'Conectado' : 
                      connectionStatus === 'connecting' ? 'Conectando...' : 
                      'Desconectado'}
                   </span>
-                  <span className="sm:hidden">
-                    {connectionStatus === 'connected' ? 'En línea' : 'Desconectado'}
-                  </span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
+            <div className="flex items-center space-x-1 sm:space-x-3 flex-shrink-0">
+              {/* Botón más compacto en móvil */}
               <button
                 onClick={startNewChat}
-                className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-xs sm:text-sm text-gray-700"
+                className="p-1.5 sm:flex sm:items-center sm:space-x-2 sm:px-3 sm:py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-xs sm:text-sm text-gray-700"
                 title="Iniciar nuevo chat"
               >
-                <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
+                <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Nuevo Chat</span>
-                <span className="sm:hidden">Nuevo</span>
               </button>
-              <div className="text-right hidden md:block">
+              {/* Session ID completamente oculto en móvil */}
+              <div className="text-right hidden lg:block">
                 <div className="text-sm text-gray-500">Session ID</div>
                 <div className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
                   {sessionId.substring(0, 16)}...
@@ -267,21 +269,21 @@ const ChatApp = () => {
         </div>
       </div>
 
-      {/* Input Area - Optimizado para móvil */}
-      <div className="bg-white border-t border-gray-200 px-3 sm:px-4 py-3 sm:py-4 flex-shrink-0">
+      {/* Input Area - Compacto para móvil */}
+      <div className="bg-white border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-4 flex-shrink-0 mobile-input">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-end space-x-2 sm:space-x-3">
+          <div className="flex items-end space-x-2">
             <div className="flex-1 min-w-0">
               <textarea
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Escribe tu consulta sobre kinesiología..."
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                placeholder="Escribe tu consulta..."
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                 rows={1}
                 style={{ 
-                  maxHeight: '100px', 
-                  minHeight: '44px',
+                  maxHeight: '80px', 
+                  minHeight: '40px',
                   fontSize: '16px' // Previene zoom en iOS
                 }}
                 disabled={isLoading}
@@ -290,14 +292,14 @@ const ChatApp = () => {
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2.5 sm:p-3 rounded-full transition-colors flex-shrink-0"
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
             >
               <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
-          {/* Status - Oculto en móvil para ahorrar espacio */}
-          <div className="hidden sm:flex items-center justify-between mt-2 text-xs text-gray-500">
+          {/* Status - Completamente oculto en móvil */}
+          <div className="hidden md:flex items-center justify-between mt-2 text-xs text-gray-500">
             <div className="flex items-center space-x-2">
               <Clock className="w-3 h-3" />
               <span>Presiona Enter para enviar</span>
