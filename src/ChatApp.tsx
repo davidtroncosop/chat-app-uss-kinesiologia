@@ -118,7 +118,7 @@ const ChatApp = () => {
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', handleTouchEnd);
     };
-  }, []);
+  }, [startNewChat]);
 
   // Llamada real al webhook de n8n
   const sendToN8nWebhook = async (message: string): Promise<string> => {
