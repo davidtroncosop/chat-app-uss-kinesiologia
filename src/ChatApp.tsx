@@ -236,9 +236,13 @@ const ChatApp = () => {
         </div>
       </div>
 
-      {/* Chat Messages - Burbujas que caen hacia abajo */}
-      <div className="flex-1 overflow-y-auto p-4 mobile-compact flex flex-col justify-end chat-scroll messages-scroll">
-        <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4 flex flex-col justify-end min-h-full">
+      {/* Chat Messages - Con scroll funcional */}
+      <div className="flex-1 overflow-y-auto p-4 mobile-compact chat-scroll messages-scroll">
+        <div className="max-w-4xl mx-auto">
+          {/* Spacer que empuja mensajes hacia abajo cuando hay pocos, pero permite scroll cuando hay muchos */}
+          <div style={{ minHeight: '30vh' }}></div>
+          {/* Contenedor de mensajes que permite scroll natural */}
+          <div className="space-y-3 sm:space-y-4 pb-5">
           {messages.map((message) => (
             <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} px-2 sm:px-0`}>
               <div className={`flex items-start space-x-1.5 sm:space-x-2 ${
@@ -289,6 +293,7 @@ const ChatApp = () => {
           )}
 
           <div ref={messagesEndRef} />
+          </div>
         </div>
       </div>
 
