@@ -5,27 +5,27 @@
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-  
+
   try {
     const body = await request.json();
     console.log('📨 Request recibido:', body);
-    
+
     // 1. Extract Fields (Edit Fields node)
     const sessionId = body.body?.data?.key?.id || body.sessionId || 'default-session';
     const chatInput = body.body?.data?.message?.conversation || body.message || '';
     const dateTime = body.body?.date_time || new Date().toISOString();
     const remoteJid = body.body?.data?.key?.remoteJid || sessionId;
-    
+
     if (!chatInput) {
       throw new Error('No se encontró mensaje en el payload');
     }
-    
+
     console.log('📝 Datos extraídos:', { sessionId, chatInput, remoteJid });
-    
+
     // 2. Get Chat History from PostgreSQL
     const chatHistory = await getChatHistory(env, sessionId);
     console.log('💬 Historial recuperado:', chatHistory.length, 'mensajes');
-    
+
     // 3. Search Knowledge Base (Supabase Vector Store)
     let relevantDocs = [];
     try {
@@ -35,18 +35,18 @@ export async function onRequestPost(context) {
       console.warn('⚠️ Knowledge base no disponible, continuando sin documentos:', error.message);
       relevantDocs = [];
     }
-    
+
     // 4. Build context for AI
     const context = buildContext(chatHistory, relevantDocs, chatInput);
-    
+
     // 5. Call Google Gemini AI
     const aiResponse = await callGeminiAI(env, context, chatInput);
     console.log('🤖 Respuesta de AI generada');
-    
+
     // 6. Save to Chat History
     await saveChatHistory(env, sessionId, chatInput, aiResponse);
     console.log('💾 Historial guardado');
-    
+
     // 7. Format and Return Response
     return new Response(JSON.stringify({
       success: true,
@@ -62,10 +62,10 @@ export async function onRequestPost(context) {
         'Access-Control-Allow-Headers': 'Content-Type'
       }
     });
-    
+
   } catch (error) {
     console.error('❌ Error en chat agent:', error);
-    
+
     return new Response(JSON.stringify({
       success: false,
       error: 'Error al procesar mensaje',
@@ -102,12 +102,12 @@ async function searchKnowledgeBase(env, query) {
   try {
     const supabaseUrl = env.SUPABASE_URL;
     const supabaseKey = env.SUPABASE_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
       console.warn('⚠️ Supabase no configurado - continuando sin knowledge base');
       return [];
     }
-    
+
     // 1. Generate embedding for the query using Gemini
     let embedding;
     try {
@@ -116,7 +116,7 @@ async function searchKnowledgeBase(env, query) {
       console.warn('⚠️ Error generando embedding:', error.message);
       return [];
     }
-    
+
     // 2. Search similar documents in Supabase
     const response = await fetch(`${supabaseUrl}/rest/v1/rpc/match_documents`, {
       method: 'POST',
@@ -132,14 +132,14 @@ async function searchKnowledgeBase(env, query) {
       }),
       signal: AbortSignal.timeout(10000) // Timeout de 10 segundos
     });
-    
+
     if (!response.ok) {
       throw new Error(`Supabase error: ${response.status}`);
     }
-    
+
     const documents = await response.json();
     return documents || [];
-    
+
   } catch (error) {
     console.error('Error buscando en knowledge base:', error);
     return [];
@@ -152,13 +152,17 @@ async function searchKnowledgeBase(env, query) {
 async function generateEmbedding(env, text) {
   try {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
-    const apiVersion = env.GEMINI_API_VERSION || 'v1';
-    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
-    
+    // Usar v1beta para embedding-001 (dimensión 768, compatible con tus documentos)
+    const apiVersion = env.GEMINI_EMBEDDING_API_VERSION || 'v1beta';
+    // Usar embedding-001 por defecto (dimensión 768)
+    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'embedding-001';
+
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');
     }
-    
+
+    console.log('🔢 Generando embedding con:', embeddingModel);
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/${apiVersion}/models/${embeddingModel}:embedContent?key=${apiKey}`,
       {
@@ -170,27 +174,29 @@ async function generateEmbedding(env, text) {
           model: `models/${embeddingModel}`,
           content: {
             parts: [{ text: text }]
-          },
-          taskType: 'RETRIEVAL_DOCUMENT' // Requerido para text-embedding-004
+          }
         }),
         signal: AbortSignal.timeout(30000) // Timeout de 30 segundos
       }
     );
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Gemini embedding error: ${response.status} - ${errorText}`);
     }
-    
+
     const data = await response.json();
-    
+
     // La estructura correcta es data.embedding.values (array de números)
     if (!data.embedding || !data.embedding.values) {
+      console.error('❌ Estructura de embedding inválida:', data);
       throw new Error('Estructura de embedding inválida');
     }
-    
+
+    console.log('✅ Embedding generado, dimensión:', data.embedding.values.length);
+
     return data.embedding.values;
-    
+
   } catch (error) {
     console.error('Error generando embedding:', error);
     throw error;
@@ -218,7 +224,7 @@ Metodología de respuesta:
 4. Mantén un tono amigable y educativo
 
 Estilo: Claro, conciso y profesional.\n\n`;
-  
+
   // Add relevant documents
   if (relevantDocs.length > 0) {
     context += '📚 Información relevante del documento:\n\n';
@@ -228,7 +234,7 @@ Estilo: Claro, conciso y profesional.\n\n`;
   } else {
     context += '📚 Nota: Actualmente no hay documentos específicos cargados. Responde basándote en tu conocimiento general sobre kinesiología y la USS.\n\n';
   }
-  
+
   // Add chat history
   if (chatHistory.length > 0) {
     context += '💬 Historial de conversación:\n\n';
@@ -237,7 +243,7 @@ Estilo: Claro, conciso y profesional.\n\n`;
     });
     context += '\n';
   }
-  
+
   return context;
 }
 
@@ -249,11 +255,11 @@ async function callGeminiAI(env, context, userMessage) {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
     const apiVersion = env.GEMINI_API_VERSION || 'v1';
     const model = env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
-    
+
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');
     }
-    
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`,
       {
@@ -277,21 +283,21 @@ async function callGeminiAI(env, context, userMessage) {
         signal: AbortSignal.timeout(30000) // Timeout de 30 segundos
       }
     );
-    
+
     if (!response.ok) {
       const errorData = await response.text();
       throw new Error(`Gemini API error: ${response.status} - ${errorData}`);
     }
-    
+
     const data = await response.json();
-    
+
     if (!data.candidates || data.candidates.length === 0) {
       throw new Error('No se recibió respuesta de Gemini');
     }
-    
+
     const aiResponse = data.candidates[0].content.parts[0].text;
     return aiResponse;
-    
+
   } catch (error) {
     console.error('Error llamando a Gemini AI:', error);
     throw error;
