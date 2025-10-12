@@ -133,7 +133,7 @@ async function searchKnowledgeBase(env, query) {
       },
       body: JSON.stringify({
         query_embedding: embedding,
-        match_threshold: 0.7,
+        match_threshold: 0.5,  // Bajado de 0.7 a 0.5 para más resultados
         match_count: 5
       }),
       signal: AbortSignal.timeout(10000) // Timeout de 10 segundos
