@@ -120,9 +120,10 @@ const ChatApp = () => {
     };
   }, [startNewChat]);
 
-  // Llamada real al webhook de n8n
+  // Llamada al AI Agent en Cloudflare Workers
   const sendToN8nWebhook = async (message: string): Promise<string> => {
-    const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL;
+    // Usar el nuevo endpoint de chat-agent en Workers
+    const webhookUrl = process.env.REACT_APP_N8N_WEBHOOK_URL || '/api/chat-agent';
     
     if (!webhookUrl) {
       throw new Error('REACT_APP_N8N_WEBHOOK_URL no está configurada');
