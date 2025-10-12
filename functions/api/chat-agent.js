@@ -152,7 +152,7 @@ async function generateEmbedding(env, text) {
   try {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
     const apiVersion = env.GEMINI_API_VERSION || 'v1';
-    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'embedding-001';
+    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
     
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');
@@ -237,7 +237,7 @@ async function callGeminiAI(env, context, userMessage) {
   try {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
     const apiVersion = env.GEMINI_API_VERSION || 'v1';
-    const model = env.GEMINI_MODEL || 'gemini-pro';
+    const model = env.GEMINI_MODEL || 'gemini-2.0-flash-exp';
     
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');

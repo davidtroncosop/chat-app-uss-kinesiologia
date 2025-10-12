@@ -22,11 +22,14 @@ GOOGLE_GEMINI_API_KEY=tu_api_key_de_gemini
 
 ### Google Gemini Configuration (Opcional)
 ```
-GEMINI_API_VERSION=v1                    # Default: v1 (puede ser v1 o v1beta)
-GEMINI_MODEL=gemini-pro                  # Default: gemini-pro (o gemini-1.5-flash, gemini-1.5-pro)
-GEMINI_EMBEDDING_MODEL=embedding-001     # Default: embedding-001 (o text-embedding-004)
+GEMINI_API_VERSION=v1                       # Default: v1
+GEMINI_MODEL=gemini-1.5-flash               # Default: gemini-1.5-flash (rápido y económico)
+GEMINI_EMBEDDING_MODEL=embedding-001        # Default: embedding-001
 ```
-**Nota:** Si no configuras estas variables, se usarán los valores por defecto que funcionan con n8n.
+**Modelos disponibles:**
+- `gemini-1.5-flash` - Rápido y económico (recomendado)
+- `gemini-1.5-pro` - Más potente y preciso
+- `gemini-pro` - Solo disponible en v1beta (legacy)
 
 ### Supabase
 ```
