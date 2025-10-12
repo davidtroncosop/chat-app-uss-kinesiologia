@@ -129,7 +129,8 @@ async function searchKnowledgeBase(env, query) {
         query_embedding: embedding,
         match_threshold: 0.7,
         match_count: 5
-      })
+      }),
+      signal: AbortSignal.timeout(10000) // Timeout de 10 segundos
     });
     
     if (!response.ok) {
@@ -166,18 +167,28 @@ async function generateEmbedding(env, text) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          model: `models/${embeddingModel}`,
           content: {
             parts: [{ text: text }]
-          }
-        })
+          },
+          taskType: 'RETRIEVAL_DOCUMENT' // Requerido para text-embedding-004
+        }),
+        signal: AbortSignal.timeout(30000) // Timeout de 30 segundos
       }
     );
     
     if (!response.ok) {
-      throw new Error(`Gemini embedding error: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Gemini embedding error: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
+    
+    // La estructura correcta es data.embedding.values (array de números)
+    if (!data.embedding || !data.embedding.values) {
+      throw new Error('Estructura de embedding inválida');
+    }
+    
     return data.embedding.values;
     
   } catch (error) {
@@ -262,7 +273,8 @@ async function callGeminiAI(env, context, userMessage) {
             topP: 0.95,
             maxOutputTokens: 1024
           }
-        })
+        }),
+        signal: AbortSignal.timeout(30000) // Timeout de 30 segundos
       }
     );
     
