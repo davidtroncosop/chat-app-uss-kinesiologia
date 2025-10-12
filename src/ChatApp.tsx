@@ -366,7 +366,7 @@ const ChatApp = () => {
       {/* Input Area - Compacto para móvil */}
       <div className="bg-white border-t border-gray-200 px-3 sm:px-4 py-2 sm:py-4 flex-shrink-0 mobile-input">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-end space-x-2">
+          <div className="flex items-center space-x-2">
             <div className="flex-1 min-w-0">
               <textarea
                 value={inputMessage}
@@ -386,21 +386,17 @@ const ChatApp = () => {
             <button
               onClick={handleSendMessage}
               disabled={isLoading || !inputMessage.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0"
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white p-2 sm:p-3 rounded-full transition-colors flex-shrink-0 self-center"
             >
               <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
 
           {/* Status - Completamente oculto en móvil */}
-          <div className="hidden md:flex items-center justify-between mt-2 text-xs text-gray-500">
+          <div className="hidden md:flex items-center justify-start mt-2 text-xs text-gray-500">
             <div className="flex items-center space-x-2">
               <Clock className="w-3 h-3" />
               <span>Presiona Enter para enviar</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <div className="w-1 h-1 rounded-full bg-green-400"></div>
-              <span>n8n Flow Activo</span>
             </div>
           </div>
         </div>
