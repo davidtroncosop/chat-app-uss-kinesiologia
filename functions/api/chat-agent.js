@@ -157,7 +157,7 @@ async function generateEmbedding(env, text) {
     }
     
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/embedding-001:embedContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -240,7 +240,7 @@ async function callGeminiAI(env, context, userMessage) {
     }
     
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
