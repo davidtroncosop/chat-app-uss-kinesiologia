@@ -151,13 +151,15 @@ async function searchKnowledgeBase(env, query) {
 async function generateEmbedding(env, text) {
   try {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
+    const apiVersion = env.GEMINI_API_VERSION || 'v1';
+    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'embedding-001';
     
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');
     }
     
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/embedding-001:embedContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/${apiVersion}/models/${embeddingModel}:embedContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -234,13 +236,15 @@ Estilo: Claro, conciso y profesional.\n\n`;
 async function callGeminiAI(env, context, userMessage) {
   try {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
+    const apiVersion = env.GEMINI_API_VERSION || 'v1';
+    const model = env.GEMINI_MODEL || 'gemini-pro';
     
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');
     }
     
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/${apiVersion}/models/${model}:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
