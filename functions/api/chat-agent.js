@@ -27,8 +27,14 @@ export async function onRequestPost(context) {
     console.log('💬 Historial recuperado:', chatHistory.length, 'mensajes');
     
     // 3. Search Knowledge Base (Supabase Vector Store)
-    const relevantDocs = await searchKnowledgeBase(env, chatInput);
-    console.log('📚 Documentos relevantes encontrados:', relevantDocs.length);
+    let relevantDocs = [];
+    try {
+      relevantDocs = await searchKnowledgeBase(env, chatInput);
+      console.log('📚 Documentos relevantes encontrados:', relevantDocs.length);
+    } catch (error) {
+      console.warn('⚠️ Knowledge base no disponible, continuando sin documentos:', error.message);
+      relevantDocs = [];
+    }
     
     // 4. Build context for AI
     const context = buildContext(chatHistory, relevantDocs, chatInput);
@@ -98,12 +104,18 @@ async function searchKnowledgeBase(env, query) {
     const supabaseKey = env.SUPABASE_KEY;
     
     if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase no configurado');
+      console.warn('⚠️ Supabase no configurado - continuando sin knowledge base');
       return [];
     }
     
     // 1. Generate embedding for the query using Gemini
-    const embedding = await generateEmbedding(env, query);
+    let embedding;
+    try {
+      embedding = await generateEmbedding(env, query);
+    } catch (error) {
+      console.warn('⚠️ Error generando embedding:', error.message);
+      return [];
+    }
     
     // 2. Search similar documents in Supabase
     const response = await fetch(`${supabaseUrl}/rest/v1/rpc/match_documents`, {
@@ -176,12 +188,21 @@ async function generateEmbedding(env, text) {
  * Build context for AI from history and documents
  */
 function buildContext(chatHistory, relevantDocs, currentQuery) {
-  let context = `Eres un asistente virtual especializado en Kinesiología. Tu función principal es responder preguntas basándote exclusivamente en el documento proporcionado.
+  let context = `Eres un asistente virtual especializado en Kinesiología de la Universidad San Sebastián (USS).
+
+Tu función es ayudar a estudiantes y personas interesadas con información sobre:
+- Programas académicos de Kinesiología
+- Requisitos de admisión
+- Malla curricular
+- Perfil del egresado
+- Áreas de especialización
+- Información general sobre kinesiología como disciplina
 
 Metodología de respuesta:
-1. Busca primero la respuesta específica en el documento
-2. Si no encuentras información exacta, proporciona conceptos relacionados
-3. Siempre cita la sección o página donde encontraste la información
+1. Responde de manera clara, concisa y profesional
+2. Si tienes información específica de documentos, úsala
+3. Si no tienes información específica, proporciona conocimiento general sobre kinesiología
+4. Mantén un tono amigable y educativo
 
 Estilo: Claro, conciso y profesional.\n\n`;
   
@@ -191,6 +212,8 @@ Estilo: Claro, conciso y profesional.\n\n`;
     relevantDocs.forEach((doc, index) => {
       context += `[Documento ${index + 1}]\n${doc.content}\n\n`;
     });
+  } else {
+    context += '📚 Nota: Actualmente no hay documentos específicos cargados. Responde basándote en tu conocimiento general sobre kinesiología y la USS.\n\n';
   }
   
   // Add chat history
