@@ -103,8 +103,13 @@ async function searchKnowledgeBase(env, query) {
     const supabaseUrl = env.SUPABASE_URL;
     const supabaseKey = env.SUPABASE_KEY;
 
+    console.log('🔍 Verificando configuración de Supabase...');
+    console.log('   SUPABASE_URL:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NO CONFIGURADA');
+    console.log('   SUPABASE_KEY:', supabaseKey ? `${supabaseKey.substring(0, 20)}...` : 'NO CONFIGURADA');
+
     if (!supabaseUrl || !supabaseKey) {
       console.warn('⚠️ Supabase no configurado - continuando sin knowledge base');
+      console.warn('   Variables disponibles en env:', Object.keys(env).filter(k => !k.startsWith('_')));
       return [];
     }
 
@@ -118,6 +123,7 @@ async function searchKnowledgeBase(env, query) {
     }
 
     // 2. Search similar documents in Supabase
+    console.log('🔎 Buscando documentos similares en Supabase...');
     const response = await fetch(`${supabaseUrl}/rest/v1/rpc/match_documents`, {
       method: 'POST',
       headers: {
@@ -134,10 +140,16 @@ async function searchKnowledgeBase(env, query) {
     });
 
     if (!response.ok) {
-      throw new Error(`Supabase error: ${response.status}`);
+      const errorText = await response.text();
+      console.error('❌ Error de Supabase:', response.status, errorText);
+      throw new Error(`Supabase error: ${response.status} - ${errorText}`);
     }
 
     const documents = await response.json();
+    console.log('✅ Documentos encontrados:', documents.length);
+    if (documents.length > 0) {
+      console.log('   Primer documento:', documents[0].content?.substring(0, 100) + '...');
+    }
     return documents || [];
 
   } catch (error) {
@@ -152,10 +164,10 @@ async function searchKnowledgeBase(env, query) {
 async function generateEmbedding(env, text) {
   try {
     const apiKey = env.GOOGLE_GEMINI_API_KEY;
-    // Usar v1beta para embedding-001 (dimensión 768, compatible con tus documentos)
+    // Usar v1beta para text-embedding-004 (dimensión 768, compatible con tus documentos)
     const apiVersion = env.GEMINI_EMBEDDING_API_VERSION || 'v1beta';
-    // Usar embedding-001 por defecto (dimensión 768)
-    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'embedding-001';
+    // Usar text-embedding-004 por defecto (dimensión 768)
+    const embeddingModel = env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004';
 
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY no configurada');

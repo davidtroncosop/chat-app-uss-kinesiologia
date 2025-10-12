@@ -24,12 +24,16 @@ GOOGLE_GEMINI_API_KEY=tu_api_key_de_gemini
 ```
 GEMINI_API_VERSION=v1                       # Default: v1
 GEMINI_MODEL=gemini-1.5-flash               # Default: gemini-1.5-flash (rápido y económico)
-GEMINI_EMBEDDING_MODEL=embedding-001        # Default: embedding-001
+GEMINI_EMBEDDING_MODEL=text-embedding-004   # Default: text-embedding-004 (dimensión 768)
 ```
 **Modelos disponibles:**
 - `gemini-1.5-flash` - Rápido y económico (recomendado)
 - `gemini-1.5-pro` - Más potente y preciso
 - `gemini-pro` - Solo disponible en v1beta (legacy)
+
+**Modelos de embedding:**
+- `text-embedding-004` - Más reciente, dimensión 768 (recomendado)
+- `embedding-001` - Legacy, dimensión 768
 
 ### Supabase
 ```
