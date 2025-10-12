@@ -145,6 +145,9 @@ const ChatApp = () => {
     };
 
     try {
+      console.log('📤 Enviando request a:', webhookUrl);
+      console.log('📦 Payload:', payload);
+      
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
@@ -153,27 +156,35 @@ const ChatApp = () => {
         body: JSON.stringify(payload)
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ Response error:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
       }
 
       const data = await response.json();
+      console.log('✅ Response data:', data);
 
       // Extraer la respuesta del webhook
-      // Ajusta esta lógica según la estructura de respuesta de tu n8n workflow
       if (data && data.response) {
         return data.response;
       } else if (data && data.message) {
         return data.message;
+      } else if (data.success === false && data.response) {
+        // Error del servidor pero con mensaje amigable
+        return data.response;
       } else if (typeof data === 'string') {
         return data;
       } else {
+        console.warn('⚠️ Estructura de respuesta inesperada:', data);
         return "Respuesta recibida del asistente USS Kinesiología";
       }
 
     } catch (error) {
-      console.error('Error calling n8n webhook:', error);
-      throw new Error('Error al conectar con el asistente. Por favor, intenta nuevamente.');
+      console.error('❌ Error calling webhook:', error);
+      throw error; // Re-throw para que el error se propague con el mensaje original
     }
   };
 
@@ -207,9 +218,13 @@ const ChatApp = () => {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       setIsTyping(false);
+      console.error('❌ Error en handleSendMessage:', error);
+      
+      // Mostrar error más detallado
+      const errorText = error instanceof Error ? error.message : 'Error desconocido';
       const errorMessage: Message = {
         id: Date.now() + 1,
-        text: "❌ Error al procesar tu mensaje. Por favor, intenta nuevamente.",
+        text: `❌ Error: ${errorText}\n\nPor favor, verifica:\n1. Que GOOGLE_GEMINI_API_KEY esté configurada en Cloudflare\n2. Los logs en Cloudflare Functions\n3. La consola del navegador (F12)`,
         sender: 'bot',
         timestamp: new Date().toLocaleTimeString()
       };
