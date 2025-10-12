@@ -114,9 +114,18 @@ async function searchKnowledgeBase(env, query) {
     }
 
     // 1. Generate embedding for the query using Gemini
+    // Mejorar el query para búsquedas de nombres
+    let enhancedQuery = query;
+    if (query.toLowerCase().includes('quien es') || query.toLowerCase().includes('quién es')) {
+      // Extraer el nombre y agregar contexto
+      const name = query.toLowerCase().replace(/quien es|quién es/gi, '').trim();
+      enhancedQuery = `${query}. Información sobre ${name}, docente, director, profesor, personal académico`;
+      console.log('🔍 Query mejorado para búsqueda de persona:', enhancedQuery);
+    }
+    
     let embedding;
     try {
-      embedding = await generateEmbedding(env, query);
+      embedding = await generateEmbedding(env, enhancedQuery);
     } catch (error) {
       console.warn('⚠️ Error generando embedding:', error.message);
       return [];
@@ -134,7 +143,7 @@ async function searchKnowledgeBase(env, query) {
       body: JSON.stringify({
         query_embedding: embedding,
         match_threshold: 0.5,  // Bajado de 0.7 a 0.5 para más resultados
-        match_count: 5
+        match_count: 10  // Aumentado de 5 a 10 para más contexto
       }),
       signal: AbortSignal.timeout(10000) // Timeout de 10 segundos
     });
@@ -224,27 +233,35 @@ function buildContext(chatHistory, relevantDocs, currentQuery) {
 Tu función es ayudar a estudiantes y personas interesadas con información sobre:
 - Programas académicos de Kinesiología
 - Requisitos de admisión
-- Malla curricular
+- Malla curricular y docentes
 - Perfil del egresado
 - Áreas de especialización
+- Personal académico y administrativo
 - Información general sobre kinesiología como disciplina
 
 Metodología de respuesta:
 1. Responde de manera clara, concisa y profesional
-2. Si tienes información específica de documentos, úsala
-3. Si no tienes información específica, proporciona conocimiento general sobre kinesiología
-4. Mantén un tono amigable y educativo
+2. IMPORTANTE: Si tienes información específica en los documentos proporcionados, úsala SIEMPRE
+3. Si la pregunta es sobre una persona (nombre), busca en los documentos si aparece ese nombre o nombres similares
+4. Si encuentras información parcial (ej: "Rodrigo" cuando preguntan por "Rodrigo Carrasco"), úsala
+5. Si no tienes información específica en los documentos, indícalo claramente
+6. Mantén un tono amigable y educativo
+
+REGLA CRÍTICA: Antes de decir "no tengo información", revisa TODOS los documentos proporcionados cuidadosamente.
 
 Estilo: Claro, conciso y profesional.\n\n`;
 
   // Add relevant documents
   if (relevantDocs.length > 0) {
-    context += '📚 Información relevante del documento:\n\n';
+    context += '📚 INFORMACIÓN DISPONIBLE EN LA BASE DE DATOS:\n\n';
+    context += '⚠️ IMPORTANTE: Usa esta información para responder. Si la pregunta está relacionada con algo mencionado aquí, úsalo.\n\n';
     relevantDocs.forEach((doc, index) => {
-      context += `[Documento ${index + 1}]\n${doc.content}\n\n`;
+      const similarity = doc.similarity ? ` (relevancia: ${(doc.similarity * 100).toFixed(0)}%)` : '';
+      context += `[Documento ${index + 1}${similarity}]\n${doc.content}\n\n`;
     });
+    context += '---\n\n';
   } else {
-    context += '📚 Nota: Actualmente no hay documentos específicos cargados. Responde basándote en tu conocimiento general sobre kinesiología y la USS.\n\n';
+    context += '📚 Nota: No se encontraron documentos específicos para esta consulta. Responde basándote en tu conocimiento general sobre kinesiología y la USS, pero indica claramente que no tienes información específica en la base de datos.\n\n';
   }
 
   // Add chat history
