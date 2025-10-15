@@ -228,7 +228,27 @@ async function generateEmbedding(env, text) {
  * Build context for AI from history and documents
  */
 function buildContext(chatHistory, relevantDocs, currentQuery) {
+  // Obtener fecha y hora actual en zona horaria de Chile
+  const now = new Date();
+  const chileTime = new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'America/Santiago',
+    dateStyle: 'full',
+    timeStyle: 'long'
+  }).format(now);
+  
+  const dayOfWeek = new Intl.DateTimeFormat('es-CL', {
+    timeZone: 'America/Santiago',
+    weekday: 'long'
+  }).format(now);
+
   let context = `Eres un asistente virtual especializado en Kinesiología de la Universidad San Sebastián (USS).
+
+📅 INFORMACIÓN TEMPORAL ACTUAL:
+- Fecha y hora actual: ${chileTime}
+- Día de la semana: ${dayOfWeek}
+- Zona horaria: Chile (America/Santiago)
+
+IMPORTANTE: Usa esta información cuando te pregunten sobre la fecha, hora, día de la semana, o cualquier consulta temporal.
 
 Tu función es ayudar a estudiantes y personas interesadas con información sobre:
 - Programas académicos de Kinesiología
